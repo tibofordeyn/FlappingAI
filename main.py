@@ -1,27 +1,34 @@
-"""
-I'm only 17 so please don't judge HAHA
-follow me on instagram btw @tibofordeyn._
-"""
-import pygame as pg
-import sys
-from random import randint as rd
+'''
+As you can see in my first commit, I initially didn't realise that
+my code would have to be object oriented.
+
+I now realise I'll have to write this code using 3 classes:
+    1 for the birds
+    1 for the pipes
+    and 1 more for the floor
+'''
+
+import pygame as pg 
+from random import randint as rd 
+from os import sys
+import neat
+import time
 pg.init()
 
 
-
-#   PROMINENT INITIALS - SCREEN
+#   STATIC INITIALS - SCREEN
 SCREENWIDTH = 864
 SCREENHEIGHT = 1200
-SCREEN = pg.display.set_mode((SCREENWIDTH,SCREENHEIGHT))
+SCREEN = pg.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
 
 
-#   PROMINENT INITIALS - FRAME RATE
+#   STATIC INITIALS - CLOCK
 CLOCK = pg.time.Clock()
 FPS = 120
 FRAMESAM = 0
 
 
-#   IMAGES - BACKGROUNDS
+#   STATIC INITIALS - BACKGROUNDS + BACKGROUND DISPLAY
 BACKGROUNDS = (
         pg.image.load("images/backgrounds/background-day.png").convert(),
         pg.image.load("images/backgrounds/background-night.png").convert(),
@@ -34,15 +41,21 @@ SCALED_BACKGROUNDS = (
     pg.transform.scale(BACKGROUNDS[2],(SCREENWIDTH, SCREENHEIGHT)),
     pg.transform.scale(BACKGROUNDS[3],(SCREENWIDTH, SCREENHEIGHT)),
 )
-RANDBACK = rd(0,len(BACKGROUNDS)-1)
+BAHIGHEST_INDEX = len(BACKGROUNDS)-1
+RANDBACK = rd(0,BAHIGHEST_INDEX)
+"""
+The randback variable choses an index for which background to 
+display. There will be a different background displayed for
+every 5 points.
+"""
 
 
-#   MAKING BIRDS
+#   STATIC INITIALS - BIRDS + BIRD DISPLAY
 DOWNFLAP = 0
 MIDFLAP = 1
 UPFLAP = 2
 
-FLAPINDEX = 0   # Will be used in a loop to make wings flap
+FLAPINDEX = 0
 
 BIRDPOS = (
     SCREENWIDTH/4,
@@ -89,106 +102,38 @@ RECT_BIRDS = (
     SCALED_BIRDS[1][UPFLAP].get_rect(center = (BIRDPOS[0],BIRDPOS[1])),
     ),
 )
-BEFOREY = (
-    (
-        float(RECT_BIRDS[0][DOWNFLAP].centery),
-        float(RECT_BIRDS[0][MIDFLAP].centery),
-        float(RECT_BIRDS[0][UPFLAP].centery),
-    ),
-    (
-        float(RECT_BIRDS[1][DOWNFLAP].centery),
-        float(RECT_BIRDS[1][MIDFLAP].centery),
-        float(RECT_BIRDS[1][UPFLAP].centery),
-    ),
-)
-HIGHEST_BINDEX = len(BIRDS)-1    # Amount of birds-1 (cuz index count starts at 0)
-RANDBIRD = rd(0, HIGHEST_BINDEX)
+BHIGHEST_INDEX = len(BIRDS)-1
+RANDBIRD = rd(0, BHIGHEST_INDEX)
+"""
+The flapindex will be used in the function to make the bird
+flap its wings.
+RECT_BIRDS will have the images of the birds, scaled, and 
+gives them a position on the screen. That position is determined
+in the BIRDPOS list.
+HIGHEST_BINDEX is the highest index in the birds list.
+RANDBIRD will be used to randomly choose which bird to display.
+"""
 
-# CREATING GRAVITY UPON THE BIRD
-BIRD_MOVEMENT = 0
-GRAVITY = 0.1
-UPWITHSPACE = 200
-DOWNSPACE = UPWITHSPACE/2
-
-
-#   CREATING A FLOOR
+#   STATIC INITIALS - THE FLOOR
 FLOORSIZE = (
     int(SCREENWIDTH),
     int(SCREENHEIGHT/5),
 )
-FLOORSURFACE = (
+
+FLOORS = (
     pg.image.load("images/floors/base.png").convert(),
 )
-SCALEDFLOOR = (
+SCALED_FLOORS = (
     pg.transform.scale(FLOORSURFACE[0],(FLOORSIZE[0],FLOORSIZE[1])),
 )
+RECT_FLOORS = (
+    SCALED_FLOORS[0].get_rect(left = 0, right = SCREENHEIGHT)
+)
+FHIGHEST_INDEX = len(FLOORS)-1
+RANDFLOOR = rd(0,FHIGHEST_INDEX)
+"""
+The RANDFLOOR will be used to generate a new floor for
+every 5 points. It will change at the same time as the 
+background.
+"""
 
-
-#   STARTING THE GAME
-while True:
-
-    pg.display.set_caption("Flappy bird voor mijn AI")
-    for event in pg.event.get():
-
-            #   MAKING CLOSING TE PROGRAM POSSIBLE
-        if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_d):
-            pg.quit()
-            sys.exit()
-
-
-            #   TAKING KEYBOARD INPUT
-        elif event.type == pg.KEYDOWN and (event.key == pg.K_SPACE or event.key == pg.K_UP):
-            RECT_BIRDS[0][DOWNFLAP].centery -= UPWITHSPACE
-            RECT_BIRDS[0][MIDFLAP].centery -= UPWITHSPACE
-            RECT_BIRDS[0][UPFLAP].centery -= UPWITHSPACE
-
-            RECT_BIRDS[1][DOWNFLAP].centery -= UPWITHSPACE
-            RECT_BIRDS[1][MIDFLAP].centery -= UPWITHSPACE
-            RECT_BIRDS[1][UPFLAP].centery -= UPWITHSPACE
-
-            if RANDBIRD == HIGHEST_BINDEX:  # Will make the bird change colors
-                RANDBIRD -= HIGHEST_BINDEX # Resets to 0
-            elif RANDBIRD != HIGHEST_BINDEX:
-                RANDBIRD += 1
-    
-                
-        elif event.type == pg.KEYDOWN and (event.key == pg.K_DOWN):
-            RECT_BIRDS[0][DOWNFLAP].centery += DOWNSPACE
-            RECT_BIRDS[0][MIDFLAP].centery += DOWNSPACE
-            RECT_BIRDS[0][UPFLAP].centery += DOWNSPACE
-
-            RECT_BIRDS[1][DOWNFLAP].centery += DOWNSPACE
-            RECT_BIRDS[1][MIDFLAP].centery += DOWNSPACE
-            RECT_BIRDS[1][UPFLAP].centery += DOWNSPACE
-
-            if RANDBIRD == HIGHEST_BINDEX:  # Will make the bird change colors
-                RANDBIRD -= HIGHEST_BINDEX # Resets to 0
-            elif RANDBIRD != HIGHEST_BINDEX:
-                RANDBIRD += 1
-          
-
-    #   CHOOSING AND BLITTING A BACKGROUND
-    SCREEN.blit(SCALED_BACKGROUNDS[RANDBACK],(0,0))
-
-
-    #   CHOOSING AND BLITTING A BIRD + BIRD GRAVITY
-    if FRAMESAM%10==0:
-        if FLAPINDEX < 2:
-            FLAPINDEX += 1
-        else:
-            FLAPINDEX = 0
-
-    BIRD_MOVEMENT += GRAVITY
-    
-
-    SCREEN.blit(SCALED_BIRDS[RANDBIRD][FLAPINDEX], RECT_BIRDS[RANDBIRD][FLAPINDEX])
-
-
-    #   CHOOSING AND BLITTING A SURFACE
-    SCREEN.blit(SCALEDFLOOR[0], (0,960))
-
-
-    #   UPDATING DISPLAY AFTER EACH LOOP + SPEED OF ITERATION
-    pg.display.update()
-    CLOCK.tick(FPS)
-    FRAMESAM += 1
