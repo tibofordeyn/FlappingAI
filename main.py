@@ -10,7 +10,7 @@ I now realise I'll have to write this code using 3 classes:
 
 
 import pygame as pg 
-from random import randint as rd 
+from random import randint as rd, randrange as rdr
 from os import sys
 import neat as nt
 import time as tm
@@ -137,9 +137,27 @@ RECT_FLOORS = (
 FHIGHEST_INDEX = len(FLOORS)-1
 RANDFLOOR = rd(0,FHIGHEST_INDEX)
 """
-The RANDFLOOR will be used to generate a new floor for
+- The RANDFLOOR will be used to generate a new floor for
 every 5 points. It will change at the same time as the 
 background.
+"""
+
+
+#   STATIC INITIALS - PIPES + PIPES DISPLAY
+PIPES = (
+    pg.image.load("images/pipes/groenePijp.png").convert(),
+    pg.image.load("images/pipes/rodePijp.png").convert(),
+)
+SCALED_PIPES = (
+    pg.transform.scale2x(PIPES[0]),
+    pg.transform.scale2x(PIPES[1]),
+)
+PHIGHEST_INDEX = len(PIPES)-1
+RANDPIPE = rd(0,PHIGHEST_INDEX)
+STARTPOS = SCREENWIDTH*1.2
+"""
+- These are the pipe images. The variables are
+needed to make one of the 2 colored pipes appear.
 """
 
 
@@ -178,7 +196,7 @@ class Bird:
             DISPLACEMENT -=4
         self.y += DISPLACEMENT
 
-    def flapping(self, screen):
+    def toDisplay(self, screen):
         """
         This function will change the displayed image
         so that the bird flaps, except for when it is going
@@ -200,24 +218,88 @@ class Bird:
 
     def get_prop(self):
         return pg.mask.from_surface(self.imgs)
-    
+
+
+#   CREATING THE CLASSES - PIPES
+class Pipe():
+    """
+    - this class represents every pipe object that's
+    blitted.
+    """
+    SCREENHEIGHT = SCREENHEIGHT
+    SCREENWIDTH = SCREENWIDTH
+    RANDPIPE = RANDPIPE
+    PIPEGAP = 300
+    SPEED = 0.7
+
+    MINHEIGHT = 50
+    MAXHEIGHT = SCREENHEIGHT/2
+
+    def __init__(self, x):
+        """
+        - The topBotGap is the gap in between the 
+        top and bottom of the pipe. Basically the
+        area threw which the bird has to fly.
+        - The self.top and self.bottom represent
+        the top and bottom of pipes.
+        """
+        self.x = x
+        self.height = 0
+        self.topBotGap = 250
+        self.top = 0
+        self.bottom = 0
+
+        self.imgc = 0
+        self.PIPE_TOP = pg.transform.flip(SCALED_PIPES[self.RANDPIPE], False, True)
+        self.PIPE_BOTTOM = SCALED_PIPES[self.RANDPIPE]
+
+        self.passed = False
+        self.move()
+        self.set_height()
+
+    def set_height(self):
+        """
+        - Will set a random height for the pipe.
+        """
+        self.height = rdr(self.MINHEIGHT, self.MAXHEIGHT)
+        self.top = self.height - self.PIPE_TOP.get_height()
+        self.bottom = self.height+self.PIPEGAP
+
+    def move(self):
+        self.x -= self.SPEED
+
+    def toDisplay(self, screen: pg.Surface):
+        """
+        - Will draw the the top and bottom of the pipes.
+        """
+        screen.blit(self.PIPE_TOP, (self.x, self.top))
+        screen.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
+        self.move()
+
+        
 
 #   PROMINENT FUNCTIONS - DRAWING THE WINDOW
-def make_screen(screen, bird):
+def make_screen(screen, bird, pipes):
     """
-    Draws stuff on the screen
-    First line is for blitting the background
+    - Draws the given arguments, which are supposed
+    to be sufraces, onto the big screen surface.
+    - First line is for blitting the background, this
+    is the big screen surface upon which all the other 
+    surfaces are drawn.
     """
     screen.blit(SCALED_BACKGROUNDS[RANDBACK],(0,0))
 
-    bird.flapping(screen)
+    for pipe in pipes:
+        Pipe.toDisplay(pipe, screen)
+    bird.toDisplay(screen)
 
     pg.display.update()
 
 
 #   PROMINENT FUNCTIONS - MAIN FUNCTION
 def main():
-    bird1 = Bird(BIRDPOS[0],BIRDPOS[1])
+    bird = Bird(BIRDPOS[0],BIRDPOS[1])
+    pipes = [Pipe(STARTPOS), Pipe(STARTPOS+500)]
     SCREEN = pg.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
 
     while True:
@@ -226,7 +308,7 @@ def main():
                 pg.quit()
                 sys.exit()
 
-        make_screen(SCREEN, bird1)
+        make_screen(SCREEN, bird, pipes)
 
 
 
