@@ -31,7 +31,7 @@ FRAMESAM = 0
 
 
 #   STATIC INITIALS - MOVEMENT
-BIRDJUMP = -200
+BIRDJUMP = -150
 
 
 #   STATIC INITIALS - BACKGROUNDS + BACKGROUND DISPLAY
@@ -153,7 +153,6 @@ SCALED_PIPES = (
     pg.transform.scale2x(PIPES[1]),
 )
 PHIGHEST_INDEX = len(PIPES)-1
-RANDPIPE = rd(0,PHIGHEST_INDEX)
 STARTPOS = SCREENWIDTH*1.2
 """
 - These are the pipe images. The variables are
@@ -168,6 +167,9 @@ class Bird:
     MIDFLAP = 1
     UPFLAP = 2
     FLAPINDEX = 0
+    BIRDJUMP = BIRDJUMP
+    BHIGHEST_INDEX = BHIGHEST_INDEX
+    RANDBIRD = RANDBIRD
 
     def __init__(self,x,y):
         """
@@ -176,22 +178,29 @@ class Bird:
         self.x = x
         self.y = y
         self.tickc = 0
-        self.grav = 0
+        self.grav = 0.002  
         self.height = self.y
         self.imgcount = 0
         self.imgs = SCALED_BIRDS[RANDBIRD][self.FLAPINDEX]
 
+    def changeColor(self):
+        if self.RANDBIRD == self.BHIGHEST_INDEX:
+            self.RANDBIRD = 0
+        elif self.RANDBIRD < self.BHIGHEST_INDEX:
+            self.RANDBIRD += 1
+
     def jump(self):
-        self.grav = BIRDJUMP
         self.tickc = 0
         self.height = self.y
+        self.y += self.BIRDJUMP
+        self.changeColor()
 
     def move(self):
         self.tickc +=1
 
-        DISPLACEMENT = self.grav*self.tickc + 1.5*self.tickc**2
-        if DISPLACEMENT >= 16:
-            DISPLACEMENT = 16
+        DISPLACEMENT = self.grav*self.tickc +0.5
+        if DISPLACEMENT >= 12:
+            DISPLACEMENT = 12
         elif DISPLACEMENT < 0:
             DISPLACEMENT -=4
         self.y += DISPLACEMENT
@@ -203,7 +212,7 @@ class Bird:
         down.
         """
         self.imgcount += 1
-        self.imgs = SCALED_BIRDS[RANDBIRD][self.FLAPINDEX]
+        self.imgs = SCALED_BIRDS[self.RANDBIRD][self.FLAPINDEX]
         DISPLACEMENT = self.grav*self.tickc + 1.5*self.tickc**2
 
         if self.imgcount%50==0:
@@ -214,9 +223,10 @@ class Bird:
         if DISPLACEMENT < 0:
             self.FLAPINDEX = 1
 
+        self.move()
         screen.blit(self.imgs, (self.x,self.y))
 
-    def get_prop(self):
+    def get_pixcor(self):
         return pg.mask.from_surface(self.imgs)
 
 
@@ -228,7 +238,7 @@ class Pipe():
     """
     SCREENHEIGHT = SCREENHEIGHT
     SCREENWIDTH = SCREENWIDTH
-    RANDPIPE = RANDPIPE
+    RANDPIPE = rd(0, PHIGHEST_INDEX)
     PIPEGAP = 300
     SPEED = 0.7
 
@@ -252,6 +262,7 @@ class Pipe():
         self.imgc = 0
         self.PIPE_TOP = pg.transform.flip(SCALED_PIPES[self.RANDPIPE], False, True)
         self.PIPE_BOTTOM = SCALED_PIPES[self.RANDPIPE]
+        self.RANDPIPE = rd(0,PHIGHEST_INDEX)
 
         self.passed = False
         self.move()
@@ -266,20 +277,71 @@ class Pipe():
         self.bottom = self.height+self.PIPEGAP
 
     def move(self):
-        self.x -= self.SPEED
+        self.x -= self.SPEED        
 
     def toDisplay(self, screen: pg.Surface):
         """
         - Will draw the the top and bottom of the pipes.
-        """
+        """    
         screen.blit(self.PIPE_TOP, (self.x, self.top))
         screen.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
         self.move()
+        self.RANDPIPE = rd(0,PHIGHEST_INDEX)
+
+    def collision(self, bird):
+        """
+        - This function will detect collisons between the
+        bird and the pipes.
+        """
+        bird_mask = bird.get_pixcor()
+        top_mask = pg.mask.from_surface(self.PIPE_TOP)
+        bottom_mask = pg.mask.from_surface(self.PIPE_BOTTOM)
+
+        top_offset = (self.x - bird.x, self.top - round(bird.y))
+        bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
+
+        bot_point = bird_mask.overlap(bottom_mask, bottom_offset)
+        top_point = bird_mask.overlap(top_mask,top_offset)
+
+        if b_point or t_point:
+            return True
+
+        return False
 
         
+#   CREATING THE CLASSES - BASE
+class Floor:
+    """
+    - This class represents the base under the bird.
+    """
+    SPEED = 0.7
+    SCREENWIDTH = SCREENWIDTH
+    FLOORS = SCALED_FLOORS
+    YPLACEMENT = SCREENHEIGHT - 220
+
+    def __init__(self):
+        self.y = self.YPLACEMENT
+        self.x1 = 0
+        self.x2 = SCREENWIDTH
+
+    def move(self):
+        self.x1 -= self.SPEED
+        self.x2 -= self.SPEED
+
+        if self.x1 + SCREENWIDTH < 0:
+            self.x1 = SCREENWIDTH
+        
+        if self.x2 + SCREENWIDTH < 0:
+            self.x2 = SCREENWIDTH
+
+    def toDisplay(self, screen):
+        self.move()
+        screen.blit(self.FLOORS[0], (self.x1, self.y))
+        screen.blit(self.FLOORS[0], (self.x2, self.y))
+
 
 #   PROMINENT FUNCTIONS - DRAWING THE WINDOW
-def make_screen(screen, bird, pipes):
+def make_screen(screen, bird, pipes, floor, frames):
     """
     - Draws the given arguments, which are supposed
     to be sufraces, onto the big screen surface.
@@ -289,32 +351,48 @@ def make_screen(screen, bird, pipes):
     """
     screen.blit(SCALED_BACKGROUNDS[RANDBACK],(0,0))
 
+    if frames%720==0:  
+        pipes.append(Pipe(STARTPOS))
     for pipe in pipes:
-        Pipe.toDisplay(pipe, screen)
+            pipe.toDisplay(screen)
+
+
+    floor.toDisplay(screen)
+
     bird.toDisplay(screen)
 
     pg.display.update()
 
 
 #   PROMINENT FUNCTIONS - MAIN FUNCTION
-def main():
-    bird = Bird(BIRDPOS[0],BIRDPOS[1])
-    pipes = [Pipe(STARTPOS), Pipe(STARTPOS+500)]
+def main(screen):
     SCREEN = pg.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
+    bird = Bird(BIRDPOS[0],BIRDPOS[1])
+    pipes = []
+    floor = Floor()
+    frames = 0
 
-    while True:
+    lost = False
+    run = True
+
+
+    while run:
         for event in pg.event.get():
             if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_d) or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 pg.quit()
                 sys.exit()
+                run = False
+                break
 
-        make_screen(SCREEN, bird, pipes)
+            if event.type == pg.KEYDOWN and not lost:
+                if event.key == pg.K_SPACE:
+                    bird.jump()
+            
+
+        frames += 1
+        make_screen(SCREEN, bird, pipes, floor, frames)
 
 
 
 
-
-
-
-
-main()
+main(SCREEN)

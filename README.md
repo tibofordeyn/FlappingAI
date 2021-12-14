@@ -1,17 +1,26 @@
 <!--HEADING-->
 # *Flapping AI*
 <!--Intro-->
-__This is my first programming project in which I will be making a clone of the flappy bird game, and an AI that will be able to play it.__
+__This is my first programming project. I'll be making a clone of the flappy bird game, and an AI that has the ability to play it successfully.__
 
 <!--MAIN INFO-->
 ## Current updates
-At the time of writing, I just started this project. Therefore I haven't really got anything left to say right now. This file will be updated regularly throughout the projects evolution.
+### Recent progress
+I decided to continue messing with this project today. I have now almost finished the user interactive version. This is what the game currently looks like:
+![](Examples/ScreenshotsSINGLEUSER/space.png)
+![](Examples/ScreenshotsSINGLEUSER/normalday.png)
+![](Examples/ScreenshotsSINGLEUSER/sea.png)
 
-I am right now thinking about wether to make a moving floor, which you aren't allowed to touch, or not. I personally think it's uselss and ugly, however I've never seen flappy bird without a surface.
+Every time you play, the background is randomly decided to be one of the 5 backgrounds I have added as of today. Eventually, I want to have 20 backgrounds added. 
+The pipes are decided to be either red or green at the beginning.
+The bird changes color with each jump.
+### Next challenges
+I have yet to completely finish collisions. I also haven't implemented a welcoming and game over screen, nor a counter that keeps track of the score.
+When this is done, I will implement the AI. That hopefully won't be too much of a challenge.
 
 <!--HOW TO RUN THE CODE-->
 ## Running my program
-To see what I have already written, use the git clone command to download the project:
+To see and/or run what I have already written, use the git clone command to download the project:
    ```bash
     $ git clone https://github.com/tibofordeyn/FlappingAI.git
    ```
@@ -27,5 +36,5 @@ Make sure you have the adequate python version and the pygame library installed.
 
 <!--CLOSING-->
 ___
-__Thanks for looking at my project. Have a nice day!__
+__Thanks for looking at my project. Have a nice day! (if you have any tips, pls let me know)__
 
